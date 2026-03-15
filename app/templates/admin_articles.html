@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}DocBrain | Manage Articles{% endblock %}
+
+{% block content %}
+<section class="page-header split">
+    <div>
+        <p class="eyebrow">Admin</p>
+        <h1>Manage docs</h1>
+    </div>
+    <a class="button-link" href="/admin/articles/new">Create article</a>
+</section>
+
+<section class="panel">
+    {% if articles %}
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Category</th>
+                    <th>Status</th>
+                    <th>Updated</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for article in articles %}
+                    <tr>
+                        <td>
+                            {% if article.status.value == "published" %}
+                                <a href="/kb/articles/{{ article.slug }}">{{ article.title }}</a>
+                            {% else %}
+                                <strong>{{ article.title }}</strong>
+                            {% endif %}
+                        </td>
+                        <td>{{ article.category }}</td>
+                        <td>{{ article.status.value }}</td>
+                        <td>{{ article.updated_at }}</td>
+                        <td style="display:flex;gap:0.5rem;align-items:center;">
+                            {% if article.status.value == "draft" %}
+                                <form action="/admin/articles/{{ article.id }}/publish" method="post">
+                                    <button type="submit">Publish</button>
+                                </form>
+                            {% else %}
+                                <span class="muted">Live</span>
+                            {% endif %}
+                            <form action="/admin/articles/{{ article.id }}/delete" method="post"
+                                  onsubmit="return confirm('Delete &quot;{{ article.title }}&quot;? This cannot be undone.')">
+                                <button type="submit" style="background:#dc2626;color:white;border:none;padding:0.3rem 0.7rem;border-radius:4px;cursor:pointer;font-size:0.82rem;">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p class="empty-state">No docs yet. Create the first one.</p>
+    {% endif %}
+</section>
+{% endblock %}

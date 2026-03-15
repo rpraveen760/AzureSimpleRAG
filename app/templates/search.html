@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}DocBrain | Search{% endblock %}
+
+{% block content %}
+<section class="page-header">
+    <p class="eyebrow">Knowledge base search</p>
+    <h1>Search across published docs</h1>
+    <form class="search-bar wide" action="/kb/search" method="get">
+        <input name="q" type="text" value="{{ query }}" placeholder="Search docs..." required>
+        <input name="category" type="text" value="{{ category or '' }}" placeholder="Optional category filter">
+        <button type="submit">Search</button>
+    </form>
+</section>
+
+{% if query %}
+    <section class="panel">
+        <div class="panel-header">
+            <h2>Results for "{{ query }}"</h2>
+            <span>{{ hits|length }} match{% if hits|length != 1 %}es{% endif %}</span>
+        </div>
+        {% if search_error %}
+            <p class="integration-note">{{ search_error }}</p>
+        {% elif hits %}
+            <div class="search-results">
+                {% for hit in hits %}
+                    <a class="search-result" href="/kb/articles/{{ hit.slug }}">
+                        <span class="badge">{{ hit.category }}</span>
+                        <h3>{{ hit.title }}</h3>
+                        <p>{{ hit.content | safe }}</p>
+                    </a>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="empty-state">No published docs matched that query yet.</p>
+        {% endif %}
+    </section>
+{% endif %}
+{% endblock %}

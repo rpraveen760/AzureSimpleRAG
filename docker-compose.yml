@@ -1,0 +1,15 @@
+services:
+  docbrain:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    environment:
+      PORT: "8000"
+      SQLITE_DB_PATH: /app/data/docbrain.db
+    ports:
+      - "${HOST_PORT:-8000}:8000"
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped

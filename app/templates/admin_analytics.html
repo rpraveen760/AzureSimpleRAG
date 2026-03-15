@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block title %}DocBrain | Analytics{% endblock %}
+
+{% block content %}
+<section class="page-header">
+    <p class="eyebrow">Analytics</p>
+    <h1>Usage signals that matter for the interview demo</h1>
+</section>
+
+<section class="stats-grid">
+    <article class="stat-card">
+        <span>Article views</span>
+        <strong>{{ analytics.overview.article_views }}</strong>
+    </article>
+    <article class="stat-card">
+        <span>Searches</span>
+        <strong>{{ analytics.overview.searches }}</strong>
+    </article>
+    <article class="stat-card">
+        <span>Zero-result searches</span>
+        <strong>{{ analytics.overview.zero_result_searches }}</strong>
+    </article>
+    <article class="stat-card">
+        <span>AI questions</span>
+        <strong>{{ analytics.overview.ai_questions }}</strong>
+    </article>
+    <article class="stat-card">
+        <span>Unanswered AI</span>
+        <strong>{{ analytics.overview.unanswered_ai_questions }}</strong>
+    </article>
+    <article class="stat-card">
+        <span>Ingested docs</span>
+        <strong>{{ analytics.overview.ingested_documents }}</strong>
+    </article>
+</section>
+
+<section class="content-grid">
+    <div class="panel">
+        <div class="panel-header">
+            <h2>Top Articles</h2>
+        </div>
+        {% if analytics.top_articles %}
+            <ul class="simple-list">
+                {% for item in analytics.top_articles %}
+                    <li>
+                        <a href="/kb/articles/{{ item.slug }}">{{ item.title }}</a>
+                        <span>{{ item.views }} views</span>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="empty-state">Article-view analytics will appear once people browse the docs.</p>
+        {% endif %}
+    </div>
+
+    <div class="panel">
+        <div class="panel-header">
+            <h2>Top Searches</h2>
+        </div>
+        {% if analytics.top_searches %}
+            <ul class="simple-list">
+                {% for item in analytics.top_searches %}
+                    <li>
+                        <strong>{{ item.query }}</strong>
+                        <span>{{ item.count }} searches, avg results {{ item.avg_results }}</span>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="empty-state">Search insights will appear after the first queries.</p>
+        {% endif %}
+    </div>
+    <div class="panel panel-wide">
+        <div class="panel-header">
+            <h2>Recent Events</h2>
+        </div>
+        {% if analytics.recent_events %}
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Query</th>
+                        <th>Results</th>
+                        <th>When</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in analytics.recent_events %}
+                        <tr>
+                            <td>{{ item.event_type.value }}</td>
+                            <td>{{ item.query or "-" }}</td>
+                            <td>{{ item.result_count if item.result_count is not none else "-" }}</td>
+                            <td>{{ item.created_at }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p class="empty-state">Recent analytics events will appear here.</p>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

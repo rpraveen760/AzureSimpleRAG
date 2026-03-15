@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}DocBrain | {{ article.title }}{% endblock %}
+
+{% block content %}
+<section class="article-layout">
+    <article class="article-panel">
+        <div class="article-meta">
+            <span class="badge">{{ article.category }}</span>
+            <span class="status-pill">{{ article.status.value }}</span>
+        </div>
+        <h1>{{ article.title }}</h1>
+        <p class="summary">{{ article.summary }}</p>
+        <div class="tags-row">
+            {% for tag in article.tags %}
+                <span class="tag-chip">{{ tag }}</span>
+            {% endfor %}
+        </div>
+        <div class="article-body">{{ article.body_html | safe }}</div>
+    </article>
+
+    <aside class="side-panel">
+        <div class="panel">
+            <p class="eyebrow">Ask AI</p>
+            <h2>Grounded on this doc set</h2>
+            <form class="stacked-form" action="/kb/articles/{{ article.slug }}/ask" method="post">
+                <textarea name="question" rows="5" placeholder="Ask about setup, permissions, or troubleshooting..." required></textarea>
+                <button type="submit">Ask question</button>
+            </form>
+            {% if answer_error %}
+                <p class="integration-note">{{ answer_error }}</p>
+            {% endif %}
+        </div>
+
+        {% if answer %}
+            <div class="panel">
+                <p class="eyebrow">Answer</p>
+                <div class="answer-block">{{ answer.answer | replace('\n', '<br>') | safe }}</div>
+                {% if answer.citations %}
+                    <h3>Citations</h3>
+                    <ul class="citation-list">
+                        {% for citation in answer.citations %}
+                            <li>
+                                <strong>{{ citation.title }}</strong>
+                                <span>{{ citation.snippet }}</span>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+        {% endif %}
+    </aside>
+</section>
+{% endblock %}

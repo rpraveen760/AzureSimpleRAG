@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block title %}DocBrain | Home{% endblock %}
+
+{% block content %}
+<section class="hero">
+    <div>
+        <p class="eyebrow">Document360-lite demo</p>
+        <h1>Publish docs, search them, ask grounded questions, and watch usage analytics.</h1>
+        <p class="hero-copy">
+            This demo keeps the story tight: create docs, publish them, search across them,
+            ask AI questions with citations, and measure how people use the knowledge base.
+        </p>
+    </div>
+    <form class="search-card" action="/kb/search" method="get">
+        <label for="q">Search the knowledge base</label>
+        <input id="q" name="q" type="text" placeholder="How do I configure SSO?" required>
+        <button type="submit">Search</button>
+    </form>
+</section>
+
+<section class="stats-grid">
+    <article class="stat-card">
+        <span>Article views</span>
+        <strong>{{ analytics.overview.article_views }}</strong>
+    </article>
+    <article class="stat-card">
+        <span>Searches</span>
+        <strong>{{ analytics.overview.searches }}</strong>
+    </article>
+    <article class="stat-card">
+        <span>Zero-result searches</span>
+        <strong>{{ analytics.overview.zero_result_searches }}</strong>
+    </article>
+    <article class="stat-card">
+        <span>AI questions</span>
+        <strong>{{ analytics.overview.ai_questions }}</strong>
+    </article>
+</section>
+
+<section class="content-grid">
+    <div class="panel">
+        <div class="panel-header">
+            <h2>Published Articles</h2>
+            <a href="/admin/articles/new">Create article</a>
+        </div>
+        {% if published_articles %}
+            <div class="article-list">
+                {% for article in published_articles %}
+                    <a class="article-card" href="/kb/articles/{{ article.slug }}">
+                        <span class="badge">{{ article.category }}</span>
+                        <h3>{{ article.title }}</h3>
+                        <p>{{ article.summary }}</p>
+                    </a>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="empty-state">No published docs yet. Create one from the admin area.</p>
+        {% endif %}
+    </div>
+    <div class="panel">
+        <div class="panel-header">
+            <h2>Draft Queue</h2>
+            <a href="/admin/articles">Review drafts</a>
+        </div>
+        {% if draft_articles %}
+            <ul class="simple-list">
+                {% for article in draft_articles %}
+                    <li>
+                        <strong>{{ article.title }}</strong>
+                        <span>{{ article.category }}</span>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="empty-state">No drafts waiting.</p>
+        {% endif %}
+
+        <div class="panel-header lower-gap">
+            <h2>Top Searches</h2>
+        </div>
+        {% if analytics.top_searches %}
+            <ul class="simple-list">
+                {% for item in analytics.top_searches %}
+                    <li>
+                        <strong>{{ item.query }}</strong>
+                        <span>{{ item.count }} searches</span>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="empty-state">Search analytics will appear here once someone uses the search bar.</p>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

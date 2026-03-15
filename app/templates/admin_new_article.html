@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block title %}DocBrain | New Article{% endblock %}
+
+{% block content %}
+<section class="page-header">
+    <p class="eyebrow">Admin</p>
+    <h1>Create a doc</h1>
+</section>
+
+<section class="panel">
+    <form class="stacked-form" action="/admin/articles" method="post">
+        <input type="text" name="title" placeholder="Title" required>
+        <input type="text" name="slug" placeholder="Slug (optional)">
+        <input type="text" name="category" placeholder="Category" value="General">
+        <input type="text" name="tags" placeholder="Tags, comma separated">
+        <textarea name="summary" rows="3" placeholder="Short summary"></textarea>
+        <textarea name="body_markdown" rows="18" placeholder="# Getting Started&#10;&#10;Write the article in Markdown..." required></textarea>
+        <label class="checkbox-row">
+            <input type="checkbox" name="publish_now" value="true">
+            Publish immediately
+        </label>
+        <button type="submit">Save article</button>
+    </form>
+</section>
+{% endblock %}

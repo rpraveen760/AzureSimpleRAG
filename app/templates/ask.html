@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}DocBrain | Ask AI{% endblock %}
+
+{% block content %}
+<section class="page-header">
+    <p class="eyebrow">Grounded Q&A</p>
+    <h1>Ask across the published knowledge base</h1>
+</section>
+
+<section class="ask-layout">
+    <div class="panel">
+        <form class="stacked-form" action="/kb/ask" method="post">
+            <input type="text" name="category" value="{{ category or '' }}" placeholder="Optional category filter">
+            <textarea name="question" rows="6" placeholder="How do I onboard a new workspace?" required>{{ question }}</textarea>
+            <button type="submit">Ask AI</button>
+        </form>
+        {% if answer_error %}
+            <p class="integration-note">{{ answer_error }}</p>
+        {% endif %}
+    </div>
+
+    {% if answer %}
+        <div class="panel">
+            <p class="eyebrow">Grounded answer</p>
+            <div class="answer-block">{{ answer.answer | replace('\n', '<br>') | safe }}</div>
+            {% if answer.citations %}
+                <h2>Citations</h2>
+                <ul class="citation-list">
+                    {% for citation in answer.citations %}
+                        <li>
+                            <a href="/kb/articles/{{ citation.slug }}">{{ citation.title }}</a>
+                            <span>{{ citation.snippet }}</span>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </div>
+    {% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,14 @@
+.env
+__pycache__/
+*.pyc
+.venv/
+.ruff_cache/
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+data/
+*.db
+.azure-tmp/
+.env.generated
+docs/
