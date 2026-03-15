@@ -19,6 +19,7 @@ def test_article_publish_flow_tracks_views(monkeypatch):
     test_db_path = PROJECT_ROOT / "data" / f"test-smoke-{uuid.uuid4().hex}.db"
     test_db_path.parent.mkdir(parents=True, exist_ok=True)
 
+    monkeypatch.setattr(settings, "database_url", "")
     monkeypatch.setattr(settings, "sqlite_db_path", test_db_path)
     monkeypatch.setattr(db_module, "_db_initialized", False)
     db_module.init_db()

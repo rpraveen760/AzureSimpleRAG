@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import re
 import uuid
 from datetime import UTC, datetime
@@ -21,6 +22,8 @@ from app.models.schemas import (
 from app.services.chunker import chunk_text
 from app.services.embeddings import embed_texts
 from app.services.search_service import delete_article_from_index, index_article_chunks
+
+logger = logging.getLogger(__name__)
 
 _SLUG_PATTERN = re.compile(r"[^a-z0-9]+")
 
@@ -99,31 +102,19 @@ def _sync_article_indexes(
     status: str = "draft",
 ) -> int:
     """
-    Index article content into both SQLite (metadata) and Azure AI Search (retrieval).
+    Index article content into the metadata store and Azure AI Search.
 
     1. Chunk the body text
-    2. Store chunks in SQLite for local reference
+    2. Store chunk metadata in the relational database
     3. Generate embeddings via Azure OpenAI
-    4. Push chunks + vectors to Azure AI Search for hybrid search
+    4. Push chunks and vectors to Azure AI Search for hybrid search
     """
-    import logging
-    logger = logging.getLogger(__name__)
-
     chunks = chunk_text(body_text) if body_text.strip() else []
     now = _now_iso()
 
-    # ── SQLite: local metadata + FTS index ───────────────────────────────
+    # Keep chunk metadata in the relational store for admin and analytics flows.
     with get_db_cursor(commit=True) as cursor:
-        cursor.execute("DELETE FROM article_search WHERE article_id = ?", (article_id,))
-        cursor.execute("DELETE FROM chunk_search WHERE article_id = ?", (article_id,))
         cursor.execute("DELETE FROM article_chunks WHERE article_id = ?", (article_id,))
-        cursor.execute(
-            """
-            INSERT INTO article_search(article_id, slug, title, category, tags, summary, body_text)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-            """,
-            (article_id, slug, title, category, " ".join(tags), summary, body_text),
-        )
         for chunk in chunks:
             chunk_id = f"{article_id}:{chunk.index}"
             cursor.execute(
@@ -133,41 +124,33 @@ def _sync_article_indexes(
                 """,
                 (chunk_id, article_id, chunk.index, chunk.text, chunk.token_count, now),
             )
-            cursor.execute(
-                """
-                INSERT INTO chunk_search(chunk_id, article_id, title, content)
-                VALUES (?, ?, ?, ?)
-                """,
-                (chunk_id, article_id, title, chunk.text),
-            )
 
-    # ── Azure AI Search: vector + keyword index ──────────────────────────
+    # Push the same chunk set to Azure AI Search for hybrid retrieval.
     if chunks:
         try:
-            # Generate embeddings for all chunks in batch
-            chunk_texts = [c.text for c in chunks]
+            chunk_texts = [chunk.text for chunk in chunks]
             embeddings = embed_texts(chunk_texts)
 
-            # Remove old chunks from Azure AI Search
             delete_article_from_index(article_id)
 
-            # Build index documents
             index_docs = []
             for chunk, embedding in zip(chunks, embeddings):
-                index_docs.append({
-                    "id": f"{article_id}_chunk_{chunk.index}",
-                    "article_id": article_id,
-                    "slug": slug,
-                    "chunk_index": chunk.index,
-                    "content": chunk.text,
-                    "content_vector": embedding,
-                    "title": title,
-                    "summary": summary,
-                    "category": category,
-                    "tags": tags,
-                    "status": status,
-                    "token_count": chunk.token_count,
-                })
+                index_docs.append(
+                    {
+                        "id": f"{article_id}_chunk_{chunk.index}",
+                        "article_id": article_id,
+                        "slug": slug,
+                        "chunk_index": chunk.index,
+                        "content": chunk.text,
+                        "content_vector": embedding,
+                        "title": title,
+                        "summary": summary,
+                        "category": category,
+                        "tags": tags,
+                        "status": status,
+                        "token_count": chunk.token_count,
+                    }
+                )
 
             index_article_chunks(index_docs)
         except Exception as exc:
@@ -339,21 +322,13 @@ def publish_article(article_id: str) -> ArticleResponse:
 
 
 def delete_article(article_id: str) -> None:
-    """Delete an article and all its indexed data from SQLite and Azure AI Search."""
-    import logging
-    logger = logging.getLogger(__name__)
-
-    # Verify it exists
+    """Delete an article and all its indexed data from the DB and Azure AI Search."""
     get_article(article_id)
 
-    # Remove from SQLite
     with get_db_cursor(commit=True) as cursor:
-        cursor.execute("DELETE FROM chunk_search WHERE article_id = ?", (article_id,))
-        cursor.execute("DELETE FROM article_search WHERE article_id = ?", (article_id,))
         cursor.execute("DELETE FROM article_chunks WHERE article_id = ?", (article_id,))
         cursor.execute("DELETE FROM articles WHERE id = ?", (article_id,))
 
-    # Remove from Azure AI Search
     try:
         delete_article_from_index(article_id)
     except Exception as exc:

@@ -134,6 +134,7 @@ $searchKey = Require-Setting -Name "AZURE_SEARCH_KEY"
 $searchIndex = Require-Setting -Name "AZURE_SEARCH_INDEX"
 $storageConnectionString = Require-Setting -Name "AZURE_STORAGE_CONNECTION_STRING"
 $storageContainer = Require-Setting -Name "AZURE_STORAGE_CONTAINER"
+$databaseUrl = [Environment]::GetEnvironmentVariable("DATABASE_URL")
 
 $openAiApiVersion = if ($env:AZURE_OPENAI_API_VERSION) { $env:AZURE_OPENAI_API_VERSION } else { "2024-10-21" }
 $appEnv = if ($env:APP_ENV) { $env:APP_ENV } else { "production" }
@@ -168,6 +169,10 @@ $secretArgs = @(
     "acrpass=$acrPass"
 )
 
+if (-not [string]::IsNullOrWhiteSpace($databaseUrl)) {
+    $secretArgs += "databaseurl=$databaseUrl"
+}
+
 $envArgs = @(
     "AZURE_AI_PROJECT_ENDPOINT=$projectEndpoint",
     "AZURE_OPENAI_ENDPOINT=$openAiEndpoint",
@@ -182,9 +187,15 @@ $envArgs = @(
     "AZURE_STORAGE_CONTAINER=$storageContainer",
     "APP_ENV=$appEnv",
     "SITE_NAME=$siteName",
-    "SQLITE_DB_PATH=/app/data/docbrain.db",
     "PORT=8000"
 )
+
+if (-not [string]::IsNullOrWhiteSpace($databaseUrl)) {
+    $envArgs += "DATABASE_URL=secretref:databaseurl"
+}
+else {
+    $envArgs += "SQLITE_DB_PATH=/app/data/docbrain.db"
+}
 
 $appExists = Test-AzCommand {
     az containerapp show --name $ContainerApp --resource-group $ResourceGroup --only-show-errors

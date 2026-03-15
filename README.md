@@ -18,7 +18,7 @@ Azure-backed features activate once Foundry, Azure AI Search, and Blob Storage a
 ```text
 FastAPI
 |- Server-rendered pages (Jinja2)
-|- Article management + analytics (SQLite)
+|- Article management + analytics (Azure PostgreSQL or SQLite fallback)
 |- Azure AI Search retrieval
 |- Azure AI Foundry chat + embeddings
 `- Azure Blob source document storage
@@ -120,6 +120,7 @@ The workflow in [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) r
 - `AZURE_SEARCH_INDEX`
 - `AZURE_STORAGE_CONNECTION_STRING`
 - `AZURE_STORAGE_CONTAINER`
+- `DATABASE_URL`
 
 ### Pre-push checklist
 
@@ -171,7 +172,8 @@ This is the recommended setup for `azure/login` because GitHub exchanges an OIDC
 
 Copy [`.env.example`](.env.example) to `.env` and fill values as needed.
 
-`SQLITE_DB_PATH` keeps article metadata and analytics available locally.
+`DATABASE_URL` is the recommended path for Azure PostgreSQL and now backs article metadata plus analytics.
+`SQLITE_DB_PATH` remains as a local fallback when `DATABASE_URL` is empty.
 Azure AI Foundry, Azure AI Search, and Blob Storage settings unlock search, grounded chat, and source-document storage.
 
 ## Interview Story
@@ -189,4 +191,4 @@ This repo is aiming at a simple demo narrative:
 Planned Azure-first upgrades:
 - add 1-2 Azure MCP integrations for enrichment and analytics copilots
 - tighten ingest-time enrichment around Foundry and Azure Language tooling
-- move the remaining local metadata-only pieces behind Azure-friendly deployment boundaries
+- replace per-request DB connections with pooling once the Azure PostgreSQL instance is in place

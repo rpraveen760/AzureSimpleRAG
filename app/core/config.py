@@ -29,7 +29,10 @@ class Settings(BaseSettings):
     azure_storage_connection_string: str = ""
     azure_storage_container: str = "docbrain-docs"
 
-    # SQLite (article metadata + analytics - lightweight, always local)
+    # Metadata + analytics persistence
+    database_url: str = ""
+
+    # SQLite fallback for local-only runs when DATABASE_URL is not set
     sqlite_db_path: Path = Path("data/docbrain.db")
 
     # Chunking

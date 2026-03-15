@@ -11,7 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from app.core.config import settings
-from app.core.db import init_db
+from app.core.db import database_status, init_db
 from app.core.foundry import foundry_status
 from app.models.schemas import HealthResponse
 from app.routers import analytics, articles, chat, ingest, pages, search
@@ -29,9 +29,9 @@ logger = logging.getLogger(__name__)
 async def lifespan(_: FastAPI):
     logger.info("DocBrain starting up (Azure-native mode)")
 
-    # Initialize SQLite for article metadata + analytics.
+    # Initialize metadata and analytics persistence.
     init_db()
-    logger.info("SQLite database ready at %s", settings.sqlite_db_path)
+    logger.info("Metadata database ready at %s", database_status())
 
     # Initialize Azure AI Search only when configuration is present.
     if is_azure_search_configured():
@@ -94,7 +94,7 @@ app.include_router(chat.router)
 async def health_check():
     """Service health check with dependency status."""
     services = {
-        "database": str(settings.sqlite_db_path),
+        "database": database_status(),
         "foundry": foundry_status(),
         "azure_search": azure_search_status(),
         "blob_storage": blob_storage_status(),

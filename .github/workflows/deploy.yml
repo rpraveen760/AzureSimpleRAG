@@ -66,6 +66,7 @@ jobs:
           AZURE_SEARCH_INDEX: ${{ secrets.AZURE_SEARCH_INDEX }}
           AZURE_STORAGE_CONNECTION_STRING: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}
           AZURE_STORAGE_CONTAINER: ${{ secrets.AZURE_STORAGE_CONTAINER }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
           APP_ENV: production
           SITE_NAME: DocBrain
         run: ./scripts/deploy_container_app.ps1
