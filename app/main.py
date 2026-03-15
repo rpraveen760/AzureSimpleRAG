@@ -1,9 +1,8 @@
-"""
-DocBrain — knowledge base app with article management, search, chat, and analytics.
-"""
+"""DocBrain knowledge base app with article management, search, chat, and analytics."""
 
 from __future__ import annotations
 
+from contextlib import asynccontextmanager
 import logging
 from pathlib import Path
 
@@ -14,16 +13,51 @@ from fastapi.staticfiles import StaticFiles
 from app.core.config import settings
 from app.core.db import init_db
 from app.core.foundry import foundry_status
-from app.services.ingestion import blob_storage_status
-from app.services.search_service import azure_search_status, is_azure_search_configured
 from app.models.schemas import HealthResponse
 from app.routers import analytics, articles, chat, ingest, pages, search
+from app.services.ingestion import blob_storage_status
+from app.services.search_service import azure_search_status, is_azure_search_configured
 
 logging.basicConfig(
     level=getattr(logging, settings.log_level.upper(), logging.INFO),
     format="%(asctime)s | %(levelname)-8s | %(name)s | %(message)s",
 )
 logger = logging.getLogger(__name__)
+
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    logger.info("DocBrain starting up (Azure-native mode)")
+
+    # Initialize SQLite for article metadata + analytics.
+    init_db()
+    logger.info("SQLite database ready at %s", settings.sqlite_db_path)
+
+    # Initialize Azure AI Search only when configuration is present.
+    if is_azure_search_configured():
+        try:
+            from app.services.search_service import ensure_search_index
+
+            index_name = ensure_search_index()
+            logger.info("Azure AI Search index '%s' ready", index_name)
+        except Exception as exc:
+            logger.error("Azure AI Search initialization failed: %s", exc)
+            logger.error("Search and RAG features will stay unavailable until Azure Search is ready")
+    else:
+        logger.info("Azure AI Search init skipped: service is not configured yet")
+
+    logger.info("Foundry status: %s", foundry_status())
+    logger.info(
+        "Azure Search status: %s | Blob Storage status: %s",
+        azure_search_status(),
+        blob_storage_status(),
+    )
+    logger.info(
+        "Chat model: %s | Embedding model: %s",
+        settings.azure_ai_chat_model,
+        settings.azure_ai_embedding_model,
+    )
+    yield
 
 app = FastAPI(
     title="DocBrain",
@@ -33,6 +67,7 @@ app = FastAPI(
     version="0.3.0",
     docs_url="/docs",
     redoc_url="/redoc",
+    lifespan=lifespan,
 )
 
 app.add_middleware(
@@ -71,7 +106,7 @@ async def health_check():
 
 @app.get("/ready", tags=["System"])
 async def readiness_check():
-    """Kubernetes-style readiness probe — reports whether all required backends are reachable.
+    """Kubernetes-style readiness probe that reports whether all required backends are reachable.
 
     Returns 200 when Azure AI Search and Foundry are both configured (and SDKs installed).
     Returns 503 with detail when any required service is unavailable.
@@ -81,6 +116,7 @@ async def readiness_check():
         "azure_search": azure_search_status(),
         "blob_storage": blob_storage_status(),
     }
+
     def _is_ready(service: str, status: str) -> bool:
         if service == "foundry":
             return status.startswith("configured")
@@ -110,33 +146,3 @@ async def api_root():
         "docs": "/docs",
         "health": "/health",
     }
-
-
-@app.on_event("startup")
-async def startup():
-    logger.info("DocBrain starting up (Azure-native mode)")
-
-    # Initialize SQLite for article metadata + analytics
-    init_db()
-    logger.info("SQLite database ready at %s", settings.sqlite_db_path)
-
-    # Initialize Azure AI Search only when configuration is present.
-    if is_azure_search_configured():
-        try:
-            from app.services.search_service import ensure_search_index
-
-            index_name = ensure_search_index()
-            logger.info("Azure AI Search index '%s' ready", index_name)
-        except Exception as exc:
-            logger.error("Azure AI Search initialization failed: %s", exc)
-            logger.error("Search and RAG features will stay unavailable until Azure Search is ready")
-    else:
-        logger.info("Azure AI Search init skipped: service is not configured yet")
-
-    logger.info("Foundry status: %s", foundry_status())
-    logger.info("Azure Search status: %s | Blob Storage status: %s", azure_search_status(), blob_storage_status())
-    logger.info(
-        "Chat model: %s | Embedding model: %s",
-        settings.azure_ai_chat_model,
-        settings.azure_ai_embedding_model,
-    )

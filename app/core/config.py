@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 from pathlib import Path
+
 from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    """Central configuration — reads from .env or environment variables."""
+    """Central configuration that reads from .env or environment variables."""
 
     # Azure AI Foundry
     azure_ai_project_endpoint: str = ""
@@ -28,7 +29,7 @@ class Settings(BaseSettings):
     azure_storage_connection_string: str = ""
     azure_storage_container: str = "docbrain-docs"
 
-    # SQLite (article metadata + analytics — lightweight, always local)
+    # SQLite (article metadata + analytics - lightweight, always local)
     sqlite_db_path: Path = Path("data/docbrain.db")
 
     # Chunking

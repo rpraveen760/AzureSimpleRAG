@@ -74,6 +74,19 @@ Open:
 The compose file mounts `./data` into the container so your SQLite metadata survives rebuilds.
 If port `8000` is already in use, run PowerShell with `$env:HOST_PORT=8001` before `docker compose up --build`.
 
+## Demo Walkthrough
+
+Use this flow in the interview:
+
+1. Open the home page and show the public knowledge base shell.
+2. Create a draft article from `/admin/articles/new`.
+3. Publish it and open the live article page.
+4. Ask a grounded question from the article page or `/kb/ask`.
+5. Show `/kb/search` returning article-level results.
+6. Finish on `/admin/analytics` to show views, searches, and AI usage.
+
+If you want a fast local seed, the [`sample_docs/`](sample_docs/) folder includes a couple of markdown docs that match the current Azure architecture story.
+
 ## Azure Deploy
 
 For the first Azure deploy from your machine:

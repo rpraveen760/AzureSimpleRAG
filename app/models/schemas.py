@@ -241,5 +241,5 @@ class AnalyticsSummaryResponse(BaseModel):
 
 class HealthResponse(BaseModel):
     status: str = "healthy"
-    version: str = "0.1.0"
+    version: str = "0.3.0"
     services: dict[str, str] = Field(default_factory=dict)
