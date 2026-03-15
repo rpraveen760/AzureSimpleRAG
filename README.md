@@ -1,6 +1,6 @@
 # DocBrain
 
-DocBrain is a `Document360-lite` knowledge base demo built for an Azure AI Foundry interview flow.
+DocBrain is an Azure-native knowledge base demo built for an Azure AI Foundry interview flow.
 
 Live demo: [DocBrain on Azure Container Apps](https://docbrain-app.wittycliff-f46aafc4.eastus2.azurecontainerapps.io)
 

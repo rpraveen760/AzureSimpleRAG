@@ -1,6 +1,6 @@
 # Getting Started with DocBrain
 
-DocBrain is an Azure-native knowledge base demo built to show the core Document360-style workflow:
+DocBrain is an Azure-native knowledge base demo built to show a practical documentation workflow:
 
 - create and publish articles
 - search across published content
@@ -22,4 +22,3 @@ The product layer is intentionally small, but the architecture is production-sha
 - Azure OpenAI for embeddings and chat
 - Azure Blob Storage for uploaded source files
 - SQLite for local article metadata and analytics
-
