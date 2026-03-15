@@ -13,6 +13,7 @@ env:
   CONTAINER_ENV: docbrain-env
   ACR_NAME: docbrainacr
   IMAGE_NAME: docbrain
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   build-and-deploy:
@@ -25,7 +26,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Log in to Azure
         uses: azure/login@v2
