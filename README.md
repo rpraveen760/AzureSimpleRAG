@@ -2,6 +2,8 @@
 
 DocBrain is a `Document360-lite` knowledge base demo built for an Azure AI Foundry interview flow.
 
+Live demo: [DocBrain on Azure Container Apps](https://docbrain-app.wittycliff-f46aafc4.eastus2.azurecontainerapps.io)
+
 The target architecture is intentionally `Azure-native`, with a small local safety net so the app can still boot while Azure setup is in progress:
 - create docs
 - publish docs
@@ -90,7 +92,7 @@ After deployment, the script prints the live Container App URL.
 
 ## GitHub Actions
 
-The workflow in [`.github/workflows/deploy.yml`](/C:/Users/rprav/Claude/Azure/docbrain/.github/workflows/deploy.yml) reuses the same deployment logic and expects these GitHub secrets:
+The workflow in [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) reuses the same deployment logic and expects these GitHub secrets:
 - `AZURE_CREDENTIALS`
 - `AZURE_SUBSCRIPTION_ID`
 - `AZURE_AI_PROJECT_ENDPOINT`
@@ -120,8 +122,8 @@ The current workflow uses `azure/login` with a service principal secret. To crea
 az ad sp create-for-rbac `
   --name "docbrain-github-actions" `
   --role Contributor `
-  --scopes /subscriptions/16a5b067-d3f7-45de-878b-64ca37903a03/resourceGroups/rg-docbrain `
-  --json-auth
+  --scopes /subscriptions/16a5b067-d3f7-45de-878b-64ca37903a03 `
+  --sdk-auth
 ```
 
 Copy the JSON output into the GitHub secret named `AZURE_CREDENTIALS`.
@@ -133,7 +135,7 @@ Safer note:
 
 ## Environment
 
-Copy [`.env.example`](/C:/Users/rprav/Claude/Azure/docbrain/.env.example) to `.env` and fill values as needed.
+Copy [`.env.example`](.env.example) to `.env` and fill values as needed.
 
 `SQLITE_DB_PATH` keeps article metadata and analytics available locally.
 Azure AI Foundry, Azure AI Search, and Blob Storage settings unlock search, grounded chat, and source-document storage.
