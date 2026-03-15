@@ -93,7 +93,8 @@ After deployment, the script prints the live Container App URL.
 ## GitHub Actions
 
 The workflow in [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) reuses the same deployment logic and expects these GitHub secrets:
-- `AZURE_CREDENTIALS`
+- `AZURE_CLIENT_ID`
+- `AZURE_TENANT_ID`
 - `AZURE_SUBSCRIPTION_ID`
 - `AZURE_AI_PROJECT_ENDPOINT`
 - `AZURE_OPENAI_ENDPOINT`
@@ -113,25 +114,45 @@ The workflow in [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) r
 - keep `.env`, `data/`, `.env.generated`, and local SQLite files untracked
 - create the GitHub repo first, then add secrets before pushing `main`
 - verify that the live app URL and `/ready` endpoint are healthy before turning CI loose on it
+- remove any leftover `AZURE_CREDENTIALS` secret after OIDC is working so GitHub Actions is no longer carrying a long-lived Azure secret
 
-### Create `AZURE_CREDENTIALS`
+### Configure Azure OIDC For GitHub Actions
 
-The current workflow uses `azure/login` with a service principal secret. To create the JSON GitHub expects, run:
+Create a service principal scoped to your subscription or resource group:
 
 ```powershell
 az ad sp create-for-rbac `
   --name "docbrain-github-actions" `
   --role Contributor `
-  --scopes /subscriptions/16a5b067-d3f7-45de-878b-64ca37903a03 `
-  --sdk-auth
+  --scopes /subscriptions/16a5b067-d3f7-45de-878b-64ca37903a03
 ```
 
-Copy the JSON output into the GitHub secret named `AZURE_CREDENTIALS`.
+Then add a federated credential that trusts your GitHub repo on `main`:
 
-Safer note:
-- official Azure Login guidance recommends OIDC over long-lived service principal secrets when possible
-- this workflow is already compatible with a future OIDC switch because it requests `id-token: write`
-- if you stay with `AZURE_CREDENTIALS`, keep the service principal scoped to `rg-docbrain` only and rotate it if the JSON is ever exposed
+```powershell
+$params = @'
+{
+  "name": "github-main",
+  "issuer": "https://token.actions.githubusercontent.com",
+  "subject": "repo:rpraveen760/AzureSimpleRAG:ref:refs/heads/main",
+  "description": "GitHub Actions OIDC for AzureSimpleRAG main branch deployments",
+  "audiences": [
+    "api://AzureADTokenExchange"
+  ]
+}
+'@
+
+az ad app federated-credential create `
+  --id "<app-id>" `
+  --parameters $params
+```
+
+Add these GitHub secrets:
+- `AZURE_CLIENT_ID`: the app ID from the service principal
+- `AZURE_TENANT_ID`: your Azure tenant ID
+- `AZURE_SUBSCRIPTION_ID`: your Azure subscription ID
+
+This is the recommended setup for `azure/login` because GitHub exchanges an OIDC token for Azure access at runtime instead of storing a long-lived JSON credential in the repo secrets.
 
 ## Environment
 
